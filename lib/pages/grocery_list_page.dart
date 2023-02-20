@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lista_compras/entities/item.dart';
+import 'package:lista_compras/entities/grocery_item.dart';
+import 'package:lista_compras/repositories/grocery_list_json_repository.dart';
+import 'package:lista_compras/repositories/grocery_list_repository.dart';
 import 'package:lista_compras/widgets/grocery_item.dart';
 
 class GroceryListPage extends StatefulWidget {
@@ -10,9 +12,18 @@ class GroceryListPage extends StatefulWidget {
 }
 
 class _GroceryListPageState extends State<GroceryListPage> {
-  List<Item> _groceryList = [];
+  List<GroceryItem> _groceryList = [];
+  double _total = 0;
+  late final GroceryListRepository _groceryListRepository;
   final TextEditingController _productNameController = TextEditingController();
   final FocusNode _productNameFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _groceryListRepository = GroceryListJsonRepository();
+    _loadGroceryList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +45,7 @@ class _GroceryListPageState extends State<GroceryListPage> {
                         labelText: 'Adicione um produto',
                       ),
                       controller: _productNameController,
-                      onSubmitted: (value) => _addItemToList(),
+                      onSubmitted: (value) => _addGroceryItem(),
                       focusNode: _productNameFocusNode,
                     ),
                   ),
@@ -42,7 +53,7 @@ class _GroceryListPageState extends State<GroceryListPage> {
                     width: 12,
                   ),
                   ElevatedButton(
-                    onPressed: () => _addItemToList(),
+                    onPressed: () => _addGroceryItem(),
                     child: const Icon(Icons.add),
                     style: ElevatedButton.styleFrom(fixedSize: Size(20, 50)),
                   )
@@ -54,7 +65,11 @@ class _GroceryListPageState extends State<GroceryListPage> {
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: _groceryList.length,
-                  itemBuilder: (context, index) => GroceryItem(item: _groceryList[index]),
+                  itemBuilder: (context, index) => GroceryItemWidget(
+                      groceryItem: _groceryList[index],
+                      indexItem: index,
+                      updateItem: _updateGroceryItem,
+                      removeItem: _removeGroceryItem),
                 ),
               ),
               const Divider(),
@@ -70,8 +85,11 @@ class _GroceryListPageState extends State<GroceryListPage> {
                     ),
                     SizedBox(width: 8),
                     Text(
-                      'R\$ 720.00',
-                      style: TextStyle(fontSize: 22, color: Colors.blue[700], fontWeight: FontWeight.w600),
+                      'R\$ ${_total.toStringAsFixed(2)}',
+                      style: TextStyle(
+                          fontSize: 22,
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -83,15 +101,46 @@ class _GroceryListPageState extends State<GroceryListPage> {
     );
   }
 
-  void _addItemToList() {
-    final itemName = _productNameController.text;
-    if (itemName.isNotEmpty) {
-      setState(() {
-        _groceryList
-            .add(Item(name: itemName));
-      });
+  void _addGroceryItem() async {
+    final groceryItemName = _productNameController.text;
+    if (groceryItemName.isNotEmpty) {
+      _groceryList.add(GroceryItem(name: groceryItemName));
+      await _saveGroceryList();
     }
     _productNameController.clear();
     _productNameFocusNode.unfocus();
+  }
+
+  void _updateGroceryItem(int index, GroceryItem groceryItem) async {
+    _groceryList.removeAt(index);
+    _groceryList.insert(index, groceryItem);
+    await _saveGroceryList();
+  }
+
+  void _removeGroceryItem(GroceryItem groceryItem) async {
+    _groceryList.remove(groceryItem);
+    await _saveGroceryList();
+  }
+
+  _saveGroceryList() async {
+    await _groceryListRepository.save(_groceryList);
+    setState(() {
+      _loadGroceryList();
+    });
+  }
+
+  void _loadGroceryList() {
+    _groceryListRepository.getItems().then((groceryItems) {
+      setState(() {
+        _groceryList = groceryItems;
+        _total = _calculateTotal();
+      });
+    });
+  }
+
+  double _calculateTotal() {
+    return _groceryList
+        .map((groceryItem) => groceryItem.subtotal)
+        .reduce((total, subtotal) => total + subtotal);
   }
 }

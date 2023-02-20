@@ -1,35 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:lista_compras/entities/item.dart';
+import 'package:lista_compras/entities/grocery_item.dart';
 
 class GroceryItemPage extends StatefulWidget {
-  final Item item;
-  const GroceryItemPage({Key? key, required this.item }) : super(key: key);
+  final GroceryItem groceryItem;
+  const GroceryItemPage({Key? key, required this.groceryItem }) : super(key: key);
 
   @override
   State<GroceryItemPage> createState() => _GroceryItemPageState();
 }
 
 class _GroceryItemPageState extends State<GroceryItemPage> {
-  late Item _item;
+  late GroceryItem _groceryItem;
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _item = Item.fromJson(widget.item.toMap());
-    _quantityController.text = _item.quantity.toString();
-    _priceController.text = _item.price.toString();
+    _groceryItem = GroceryItem.fromJson(widget.groceryItem.toMap());
+    _quantityController.text = _groceryItem.quantity.toString();
+    _priceController.text = _groceryItem.price.toString();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_item.name),
+        title: Text(_groceryItem.name),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          _quantitySetValue(_quantityController.text);
+          _priceSetValue(_priceController.text);
+          Navigator.pop(context, _groceryItem);
+        },
         child: Icon(Icons.save),
         backgroundColor: Colors.blue,
       ),
@@ -48,6 +52,10 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
                   suffixText: 'un / g'),
               style: TextStyle(fontSize: 20, color: Colors.blue[700]),
               controller: _quantityController,
+              onTap: () {
+                _quantityController.text = '';
+              },
+              onFieldSubmitted: _quantitySetValue,
             ),
             SizedBox(height: 32),
             TextFormField(
@@ -60,6 +68,10 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
                   prefixText: 'R\$ '),
               style: TextStyle(fontSize: 20, color: Colors.blue[700]),
               controller: _priceController,
+              onTap: () {
+                _priceController.text = '';
+              },
+              onFieldSubmitted: _priceSetValue,
             ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 16),
@@ -68,12 +80,12 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Total: ',
+                    'Subtotal: ',
                     style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                   ),
                   SizedBox(width: 4),
                   Text(
-                    'R\$ 720.00',
+                    'R\$ ${_groceryItem.subtotal.toStringAsFixed(2)}',
                     style: TextStyle(fontSize: 18, color: Colors.blue[700], fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -83,5 +95,32 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
         ),
       ),
     );
+  }
+
+  _quantitySetValue(value) {
+    if (value.isEmpty) {
+      _quantityController.text = _groceryItem.quantity.toString();
+    } else {
+      _quantityController.text = value;
+    }
+    _calculateSubtotal();
+  }
+
+  _priceSetValue(value) {
+    if (value.isEmpty) {
+      _priceController.text = _groceryItem.price.toString();
+    } else {
+      _priceController.text = value;
+    }
+    _calculateSubtotal();
+  }
+
+  _calculateSubtotal() {
+    final double quantity = double.parse(_quantityController.text);
+    final double price = double.parse(_priceController.text);
+
+    setState(() {
+      _groceryItem.calculateSubtotal(quantity, price);
+    });
   }
 }
