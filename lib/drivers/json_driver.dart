@@ -7,7 +7,8 @@ class JsonDriver {
   static Future<File> _getFile(String filename) async {
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/data/$filename.json');
-    if (!file.existsSync()) await file.create();
+    print(file);
+    if (!file.existsSync()) await file.create(recursive: true);
     return file;
   }
 
