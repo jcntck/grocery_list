@@ -13,6 +13,9 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
   late GroceryItem _groceryItem;
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
+  final FocusNode _quantityFocusNode = FocusNode();
+  final FocusNode _priceFocusNode = FocusNode();
+
 
   @override
   void initState() {
@@ -27,6 +30,9 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_groceryItem.name),
+        iconTheme: IconThemeData(
+          color: Colors.black
+        )
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -35,7 +41,7 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
           Navigator.pop(context, _groceryItem);
         },
         child: Icon(Icons.save),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.green,
       ),
       body: Container(
         padding: EdgeInsets.symmetric(vertical: 32, horizontal: 16),
@@ -46,32 +52,48 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                   labelText: 'Quantidade',
-                  labelStyle: TextStyle(fontSize: 18),
+                  labelStyle: TextStyle(fontSize: 18, color: Colors.green),
                   contentPadding: EdgeInsets.all(18),
                   border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Colors.green
+                    ),
+                  ),
                   suffixText: 'un / g'),
-              style: TextStyle(fontSize: 20, color: Colors.blue[700]),
+              style: TextStyle(fontSize: 20, color: Colors.grey[700]),
+              cursorColor: Colors.green,
               controller: _quantityController,
               onTap: () {
                 _quantityController.text = '';
               },
+              onChanged: _quantitySetValue,
               onFieldSubmitted: _quantitySetValue,
+              focusNode: _quantityFocusNode,
             ),
             SizedBox(height: 32),
             TextFormField(
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                   labelText: 'Valor Unitário',
-                  labelStyle: TextStyle(fontSize: 18),
+                  labelStyle: TextStyle(fontSize: 18, color: Colors.green),
                   contentPadding: EdgeInsets.all(18),
                   border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                        color: Colors.green
+                    ),
+                  ),
                   prefixText: 'R\$ '),
-              style: TextStyle(fontSize: 20, color: Colors.blue[700]),
+              style: TextStyle(fontSize: 20, color: Colors.grey[700]),
+              cursorColor: Colors.green,
               controller: _priceController,
               onTap: () {
                 _priceController.text = '';
               },
+              onChanged: _priceSetValue,
               onFieldSubmitted: _priceSetValue,
+              focusNode: _priceFocusNode,
             ),
             Container(
               margin: EdgeInsets.symmetric(vertical: 16),
@@ -86,7 +108,7 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
                   SizedBox(width: 4),
                   Text(
                     'R\$ ${_groceryItem.subtotal.toStringAsFixed(2)}',
-                    style: TextStyle(fontSize: 18, color: Colors.blue[700], fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 18, color: Colors.green[700], fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -99,7 +121,7 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
 
   _quantitySetValue(value) {
     if (value.isEmpty) {
-      _quantityController.text = _groceryItem.quantity.toString();
+      _quantityController.text =  !_quantityFocusNode.hasFocus ? _groceryItem.price.toString() : '';
     } else {
       _quantityController.text = value;
     }
@@ -108,19 +130,21 @@ class _GroceryItemPageState extends State<GroceryItemPage> {
 
   _priceSetValue(value) {
     if (value.isEmpty) {
-      _priceController.text = _groceryItem.price.toString();
+      _priceController.text = !_priceFocusNode.hasFocus ? _groceryItem.price.toString() : '';
     } else {
-      _priceController.text = value;
+      _priceController.text =  value;
     }
     _calculateSubtotal();
   }
 
   _calculateSubtotal() {
-    final double quantity = double.parse(_quantityController.text);
-    final double price = double.parse(_priceController.text);
+    final double quantity = double.tryParse(_quantityController.text) ?? 0;
+    final double price = double.tryParse(_priceController.text) ?? 0;
 
     setState(() {
       _groceryItem.calculateSubtotal(quantity, price);
+      _quantityController.selection = TextSelection.collapsed(offset: _quantityController.text.length);
+      _priceController.selection = TextSelection.collapsed(offset: _priceController.text.length);
     });
   }
 }

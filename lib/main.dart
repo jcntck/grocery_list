@@ -23,6 +23,10 @@ class App extends StatelessWidget {
     var baseTheme = ThemeData();
     return baseTheme.copyWith(
       textTheme: GoogleFonts.nunitoTextTheme(baseTheme.textTheme),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.grey[100],
+        titleTextStyle: const TextStyle(color: Colors.black),
+      )
     );
   }
 }

@@ -24,6 +24,7 @@ class GroceryItemWidget extends StatelessWidget {
         ),
         direction: DismissDirection.startToEnd,
         child: Card(
+          color: groceryItem.quantity > 0 ? Colors.green[50] : Colors.white,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8),
             child: Column(
@@ -57,7 +58,7 @@ class GroceryItemWidget extends StatelessWidget {
                       'Subtotal',
                       style: TextStyle(
                         fontWeight: FontWeight.w400,
-                        color: Colors.blue[700],
+                        color: Colors.green[700],
                       ),
                     ),
                   ),
@@ -66,7 +67,7 @@ class GroceryItemWidget extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
-                      color: Colors.blue[700],
+                      color: Colors.green[700],
                     ),
                   )
                 ])
